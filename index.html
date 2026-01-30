@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mattestyrkan (0-10)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #eef2f3; padding: 20px; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; margin-bottom: 20px; }
+        
+        /* Fixar så att alla fält syns tydligt */
+        .setup-group { margin-bottom: 15px; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        
+        input[type="text"], select { 
+            padding: 12px; 
+            width: 100%; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            box-sizing: border-box; 
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .q-box { background: #f9f9f9; padding: 10px; border-radius: 5px; border-bottom: 2px solid #3498db; font-weight: bold; }
+        .user-ans { width: 60px; padding: 8px; margin-left: 5px; border: 2px solid #ccc; border-radius: 5px; text-align: center; font-size: 18px; }
+        
+        #timer { font-size: 28px; color: #e74c3c; font-weight: bold; margin-bottom: 15px; }
+        
+        button { 
+            cursor: pointer; 
+            padding: 15px 30px; 
+            font-size: 18px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        
+        .btn-start { background: #2ecc71; color: white; width: 100%; }
+        .btn-start:hover { background: #27ae60; }
+        .btn-finish { background: #3498db; color: white; }
+        .btn-submit { background: #9b59b6; color: white; padding: 15px 40px; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="setup">
+    <h2>✖️ Mattetest (0-10)</h2>
+    
+    <div class="setup-group">
+        <label for="classSelect">Din klass:</label>
+        <select id="classSelect">
+            <option value="" disabled selected>-- Välj klass --</option>
+            <option value="4A">Klass 4A</option>
+            <option value="4B">Klass 4B</option>
+            <option value="4C">Klass 4C</option>
+            <option value="4D">Klass 4D</option>
+        </select>
+    </div>
+
+    <div class="setup-group">
+        <label for="studentName">Ditt namn:</label>
+        <input type="text" id="studentName" placeholder="Förnamn Efternamn">
+    </div>
+
+    <div class="setup-group">
+        <label for="duration">Tidsgräns:</label>
+        <select id="duration">
+            <option value="240">4 Minuter</option>
+            <option value="300" selected>5 Minuter</option>
+            <option value="360">6 Minuter</option>
+        </select>
+    </div>
+
+    <button type="button" class="btn-start" onclick="startQuiz()">STARTA TESTET</button>
+</div>
+
+<div class="container hidden" id="quiz-area">
+    <div id="timer">Tid kvar: --:--</div>
+    <div class="grid" id="question-grid"></div>
+    <button type="button" class="btn-finish" onclick="finishQuiz()">Jag är klar!</button>
+</div>
+
+<div class="container hidden" id="results">
+    <h2>🎉 Testet är klart!</h2>
+    <div id="finalScore" style="font-size: 24px; font-weight: bold; margin-bottom: 5px;"></div>
+    <div id="finalTime" style="font-size: 18px; margin-bottom: 10px;"></div>
+    <p id="classDisplay" style="color: #666; font-weight: bold;"></p>
+    <button type="button" id="submitBtn" class="btn-submit" onclick="sendToGoogleSheet()">SKICKA TILL LÄRAREN</button>
+    <p id="statusMsg" style="margin-top:15px; font-weight:bold; color:#27ae60;"></p>
+</div>
+
+<script>
+    // Din URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxugdNSIXWyk-ANp-eNjc75eIVjLBta3rnHI2wbwZD4XtOLNlPNLxudmH_ZOjFg-9N0/exec";
+    
+    // Dina 92 uppgifter
+    const taskString = "2x3, 5x4, 0x8, 1x4, 8x4, 6x3, 9x4, 10x9, 5x6, 6x1, 9x6, 10x2, 4x1, 9x3, 1x8, 7x5, 6x6, 9x5, 8x7, 6x4, 7x2, 1x5, 2x9, 3x4, 6x7, 10x5, 3x9, 1x7, 2x8, 4x3, 8x6, 4x5, 7x4, 2x6, 3x7, 2x1, 3x6, 8x5, 4x7, 2x4, 7x9, 5x2, 9x1, 4x10, 2x5, 8x1, 7x1, 8x2, 9x9, 6x2, 7x7, 3x3, 5x1, 9x2, 8x8, 6x9, 10x3, 6x5, 9x7, 4x8, 3x5, 8x10, 1x2, 2x7, 3x8, 10x7, 6x8, 3x1, 8x3, 4x6, 4x2, 5x8, 7x6, 5x3, 6x10, 7x8, 3x2, 1x6, 4x9, 5x5, 7x0, 8x9, 10x10, 7x3, 5x9, 10x6, 1x9, 2x2, 9x8, 1x3, 5x7, 4x4";
+    
+    let timeLeft, initialTime, timerId, chosenClass;
+
+    function startQuiz() {
+        const nameVal = document.getElementById('studentName').value.trim();
+        const classVal = document.getElementById('classSelect').value;
+        
+        if(!classVal) return alert("Du måste välja en klass!");
+        if(!nameVal) return alert("Du måste skriva ditt namn!");
+
+        chosenClass = classVal;
+        initialTime = parseInt(document.getElementById('duration').value);
+        timeLeft = initialTime;
+        
+        document.getElementById('setup').classList.add('hidden');
+        document.getElementById('quiz-area').classList.remove('hidden');
+        
+        generateQuestions();
+        startTimer();
+    }
+
+    function generateQuestions() {
+        const grid = document.getElementById('question-grid');
+        grid.innerHTML = ""; 
+
+        let tasks = taskString.split(", ").map(t => {
+            let p = t.split("x");
+            return { a: p[0], b: p[1], ans: parseInt(p[0]) * parseInt(p[1]) };
+        });
+
+        // Blanda
+        for (let i = tasks.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [tasks[i], tasks[j]] = [tasks[j], tasks[i]];
+        }
+
+        tasks.forEach((q, index) => {
+            const box = document.createElement('div');
+            box.className = 'q-box';
+            box.innerHTML = q.a + " x " + q.b + " = ";
+            
+            const input = document.createElement('input');
+            input.type = "text";
+            input.inputMode = "numeric";
+            input.className = "user-ans";
+            input.setAttribute('data-correct', q.ans);
+            
+            input.onkeydown = function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const allInputs = document.querySelectorAll('.user-ans');
+                    if (allInputs[index + 1]) {
+                        allInputs[index + 1].focus();
+                    } else {
+                        finishQuiz();
+                    }
+                }
+            };
+            box.appendChild(input);
+            grid.appendChild(box);
+        });
+
+        setTimeout(() => { 
+            const f = document.querySelector('.user-ans');
+            if(f) f.focus(); 
+        }, 100);
+    }
+
+    function startTimer() {
+        timerId = setInterval(() => {
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60);
+            let s = timeLeft % 60;
+            document.getElementById('timer').innerText = "Tid kvar: " + m + ":" + (s < 10 ? '0' : '') + s;
+            if(timeLeft <= 0) finishQuiz();
+        }, 1000);
+    }
+
+    function finishQuiz() {
+        clearInterval(timerId);
+        let correct = 0;
+        const inputs = document.querySelectorAll('.user-ans');
+        
+        inputs.forEach(input => {
+            const v = input.value.trim();
+            if(v !== "" && parseInt(v) === parseInt(input.getAttribute('data-correct'))) {
+                correct++;
+            }
+        });
+
+        const used = initialTime - timeLeft;
+        document.getElementById('quiz-area').classList.add('hidden');
+        document.getElementById('results').classList.remove('hidden');
+        document.getElementById('finalScore').innerText = correct + " / 92 rätt";
+        document.getElementById('finalTime').innerText = "Tid: " + Math.floor(used/60) + "m " + (used%60) + "s";
+        document.getElementById('classDisplay').innerText = "Klass: " + chosenClass;
+    }
+
+    async function sendToGoogleSheet() {
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('statusMsg');
+        btn.disabled = true;
+        btn.innerText = "Skickar...";
+
+        const payload = {
+            name: document.getElementById('studentName').value,
+            score: document.getElementById('finalScore').innerText,
+            time: document.getElementById('finalTime').innerText,
+            className: chosenClass 
+        };
+
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                cache: 'no-cache',
+                body: JSON.stringify(payload)
+            });
+            status.innerText = "✅ Resultatet har sparats för " + chosenClass + "!";
+            btn.style.display = "none";
+        } catch (e) {
+            status.style.color = "red";
+            status.innerText = "❌ Fel! Visa läraren din skärm.";
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
