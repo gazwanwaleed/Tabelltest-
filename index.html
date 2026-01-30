@@ -96,8 +96,10 @@
 </div>
 
 <script>
+    // Din unika adress till kalkylarket
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxugdNSIXWyk-ANp-eNjc75eIVjLBta3rnHI2wbwZD4XtOLNlPNLxudmH_ZOjFg-9N0/exec";
     
+    // Dina 92 specifika uppgifter
     const taskString = "2x3, 5x4, 0x8, 1x4, 8x4, 6x3, 9x4, 10x9, 5x6, 6x1, 9x6, 10x2, 4x1, 9x3, 1x8, 7x5, 6x6, 9x5, 8x7, 6x4, 7x2, 1x5, 2x9, 3x4, 6x7, 10x5, 3x9, 1x7, 2x8, 4x3, 8x6, 4x5, 7x4, 2x6, 3x7, 2x1, 3x6, 8x5, 4x7, 2x4, 7x9, 5x2, 9x1, 4x10, 2x5, 8x1, 7x1, 8x2, 9x9, 6x2, 7x7, 3x3, 5x1, 9x2, 8x8, 6x9, 10x3, 6x5, 9x7, 4x8, 3x5, 8x10, 1x2, 2x7, 3x8, 10x7, 6x8, 3x1, 8x3, 4x6, 4x2, 5x8, 7x6, 5x3, 6x10, 7x8, 3x2, 1x6, 4x9, 5x5, 7x0, 8x9, 10x10, 7x3, 5x9, 10x6, 1x9, 2x2, 9x8, 1x3, 5x7, 4x4";
     
     let timeLeft, initialTime, timerId, chosenClass;
@@ -129,6 +131,7 @@
             return { a: p[0], b: p[1], ans: parseInt(p[0]) * parseInt(p[1]) };
         });
 
+        // Slumpa frågorna
         for (let i = tasks.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [tasks[i], tasks[j]] = [tasks[j], tasks[i]];
@@ -201,9 +204,9 @@
         const status = document.getElementById('statusMsg');
         
         btn.disabled = true;
-        btn.innerText = "Skickar...";
+        btn.innerText = "Köar resultat...";
         status.style.color = "#333";
-        status.innerText = "Sparar resultat för " + chosenClass + "... Stäng inte sidan.";
+        status.innerText = "Många skickar samtidigt. Stäng inte sidan, det kan ta upp till en minut...";
 
         const payload = {
             name: document.getElementById('studentName').value,
@@ -212,8 +215,9 @@
             className: chosenClass 
         };
 
+        // Timeout satt till 6.5 minuter för att matcha kön i Google Sheets
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 45000); 
+        const timeoutId = setTimeout(() => controller.abort(), 390000); 
 
         try {
             await fetch(SCRIPT_URL, {
@@ -226,13 +230,13 @@
             
             clearTimeout(timeoutId);
             status.style.color = "#27ae60";
-            status.innerText = "✅ Klart! Ditt resultat har sparats.";
+            status.innerText = "✅ Klart! Ditt resultat har sparats i fliken " + chosenClass;
             btn.style.display = "none";
         } catch (e) {
             clearTimeout(timeoutId);
             console.error("Fel:", e);
             status.style.color = "#e74c3c";
-            status.innerText = "❌ Kunde inte spara (kön kan vara full). Vänta 3 sekunder och tryck på knappen igen.";
+            status.innerText = "❌ Kunde inte spara (nätverket svajade). Vänta 3 sekunder och tryck på 'FÖRSÖK IGEN'.";
             btn.disabled = false;
             btn.innerText = "FÖRSÖK IGEN";
         }
