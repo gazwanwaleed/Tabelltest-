@@ -154,9 +154,8 @@
                     const allInputs = document.querySelectorAll('.user-ans');
                     if (allInputs[index + 1]) {
                         allInputs[index + 1].focus();
-                    } else {
-                        finishQuiz();
                     }
+                    // Här togs finishQuiz() bort för att hindra inlämning via Enter
                 }
             };
             box.appendChild(input);
@@ -215,7 +214,6 @@
             className: chosenClass 
         };
 
-        // Timeout satt till 6.5 minuter för att matcha kön i Google Sheets
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 390000); 
 
