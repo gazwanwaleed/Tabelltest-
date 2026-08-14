@@ -91,6 +91,10 @@
     <div id="finalScore" style="font-size: 24px; font-weight: bold; margin-bottom: 5px;"></div>
     <div id="finalTime" style="font-size: 18px; margin-bottom: 10px;"></div>
     <p id="classDisplay" style="color: #666; font-weight: bold;"></p>
+    
+    <!-- Sektion för att visa feleleverna hade -->
+    <div id="errorContainer" style="margin-top: 15px; margin-bottom: 20px; max-height: 200px; overflow-y: auto; text-align: left; background: #fdf2f2; padding: 15px; border-radius: 8px; border: 1px solid #f5c6cb;"></div>
+
     <button type="button" id="submitBtn" class="btn-submit" onclick="sendToGoogleSheet()">SKICKA TILL LÄRAREN</button>
     <p id="statusMsg" style="margin-top:15px; font-weight:bold;"></p>
 </div>
@@ -147,6 +151,7 @@
             input.inputMode = "numeric";
             input.className = "user-ans";
             input.setAttribute('data-correct', q.ans);
+            input.setAttribute('data-question', q.a + " x " + q.b);
             
             input.onkeydown = function(e) {
                 if (e.key === "Enter") {
@@ -181,12 +186,22 @@
     function finishQuiz() {
         clearInterval(timerId);
         let correct = 0;
+        let mistakes = [];
         const inputs = document.querySelectorAll('.user-ans');
         
         inputs.forEach(input => {
             const v = input.value.trim();
-            if(v !== "" && parseInt(v) === parseInt(input.getAttribute('data-correct'))) {
+            const correctAns = parseInt(input.getAttribute('data-correct'));
+            const questionStr = input.getAttribute('data-question');
+
+            if(v !== "" && parseInt(v) === correctAns) {
                 correct++;
+            } else {
+                mistakes.push({
+                    q: questionStr,
+                    correct: correctAns,
+                    user: v === "" ? "Ej svarat" : v
+                });
             }
         });
 
@@ -196,6 +211,19 @@
         document.getElementById('finalScore').innerText = correct + " / 92 rätt";
         document.getElementById('finalTime').innerText = "Tid: " + Math.floor(used/60) + "m " + (used%60) + "s";
         document.getElementById('classDisplay').innerText = "Klass: " + chosenClass;
+
+        // Visa respons på felaktiga eller ej besvarade uppgifter
+        const errorContainer = document.getElementById('errorContainer');
+        if (mistakes.length > 0) {
+            let html = "<h3 style='color: #c0392b; margin-top: 0; margin-bottom: 10px;'>Genomgång av fel / ej svarade:</h3><ul style='margin: 0; padding-left: 20px; line-height: 1.6;'>";
+            mistakes.forEach(m => {
+                html += `<li><b>${m.q} = ${m.correct}</b> (Ditt svar: <span style="color: #e74c3c;">${m.user}</span>)</li>`;
+            });
+            html += "</ul>";
+            errorContainer.innerHTML = html;
+        } else {
+            errorContainer.innerHTML = "<p style='color: #27ae60; font-weight: bold; text-align: center; margin: 0;'>Alla rätt! Snyggt jobbat! 🌟</p>";
+        }
     }
 
     async function sendToGoogleSheet() {
@@ -243,4 +271,3 @@
 
 </body>
 </html>
-
